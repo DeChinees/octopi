@@ -1,0 +1,61 @@
+---
+- name: Install xserver-xorg-input-evdev & cmake
+  apt:
+    pkg:
+      - xserver-xorg-input-evdev
+      - cmake
+    state: present
+
+- name: Git Clone RPI_LCD scripts
+  ansible.builtin.git:
+    repo: https://github.com/waveshare/LCD-show.git
+    dest: LCD-show
+    version: master
+    force: true
+
+- name: Change file ownership, group and permissions
+  ansible.builtin.file:
+    path: LCD-show/LCD32C-show
+    mode: '0744'
+
+- name: Prevent LCD32-show to reboot
+  ansible.builtin.lineinfile:
+    path: LCD-show/LCD32C-show
+    regexp: '^sudo reboot'
+    line: \# sudo reboot
+
+- name: Enable LCD
+  ansible.builtin.command:
+    cmd: sudo ./LCD32C-show
+  args:
+    chdir: LCD-show
+
+- name: Reboot host and wait for it to restart
+  reboot:
+    msg: "Reboot initiated by Ansible"
+    connect_timeout: 5
+    reboot_timeout: 600
+    pre_reboot_delay: 0
+    post_reboot_delay: 30
+    test_command: whoami
+
+- name: Rotate LCD 180
+  ansible.builtin.command:
+    cmd: sudo ./LCD32C-show 180
+  args:
+    chdir: LCD-show
+
+- name: Set console font to VGA8x8
+  ansible.builtin.replace:
+    path: /boot/cmdline.txt
+    regexp: "ProFont6x11"
+    replace: "VGA8x8"
+
+- name: Reboot host and wait for it to restart
+  reboot:
+    msg: "Reboot initiated by Ansible"
+    connect_timeout: 5
+    reboot_timeout: 600
+    pre_reboot_delay: 0
+    post_reboot_delay: 30
+    test_command: whoami

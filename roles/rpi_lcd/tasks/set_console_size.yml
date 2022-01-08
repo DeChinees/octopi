@@ -1,0 +1,32 @@
+---
+- name: Set framebuffer_width
+  ansible.builtin.lineinfile:
+    path: /boot/config.txt
+    regexp: '#framebuffer_width='
+    line: framebuffer_width=320
+  when: RPi_LCD_C|upper == "YES"
+
+- name: Set framebuffer_height
+  ansible.builtin.lineinfile:
+    path: /boot/config.txt
+    regexp: '#framebuffer_height='
+    line: framebuffer_height=240
+  when: RPi_LCD_C|upper == "YES"
+
+- name: Set font face to Terminus
+  ansible.builtin.lineinfile:
+    path: /etc/default/console-setup
+    regexp: '^FONTFACE="'
+    line: FONTFACE="Terminus"
+
+- name: Set font size
+  ansible.builtin.lineinfile:
+    path: /etc/default/console-setup
+    regexp: '^FONTSIZE="'
+    line: FONTSIZE="6x12"
+
+- name: Restart console
+  ansible.builtin.command:
+    cmd: sudo ./console-setup.sh restart
+  args:
+    chdir: /etc/init.d
